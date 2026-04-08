@@ -1,0 +1,17 @@
+[Unit]
+Description=U2T Web Platform
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/u2t_web
+EnvironmentFile=/opt/u2t_web/.env
+ExecStart=/opt/u2t_web/.venv/bin/python scripts/run.py
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=3
+RestartPreventExitStatus=3
+
+[Install]
+WantedBy=multi-user.target

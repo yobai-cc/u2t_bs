@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Packets{% endblock %}
+{% block content %}
+<section class="page-header">
+  <h1>协议数据包</h1>
+</section>
+<section class="card">
+  <form method="get" action="/packets" class="filter-row">
+    <label>协议
+      <select name="protocol">
+        <option value="" {% if not selected_protocol %}selected{% endif %}>全部</option>
+        <option value="UDP" {% if selected_protocol == 'UDP' %}selected{% endif %}>UDP</option>
+        <option value="TCP" {% if selected_protocol == 'TCP' %}selected{% endif %}>TCP</option>
+      </select>
+    </label>
+    <label>最近 N 条<input type="number" name="limit" value="{{ limit }}"></label>
+    <button type="submit">筛选</button>
+  </form>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>时间</th><th>协议</th><th>方向</th><th>源</th><th>目标</th><th>长度</th><th>HEX</th><th>文本</th></tr>
+      </thead>
+      <tbody>
+        {% for row in packets %}
+        <tr>
+          <td>{{ row.created_at }}</td>
+          <td>{{ row.protocol }}</td>
+          <td>{{ row.direction }}</td>
+          <td>{{ row.src_ip }}:{{ row.src_port }}</td>
+          <td>{{ row.dst_ip }}:{{ row.dst_port }}</td>
+          <td>{{ row.length }}</td>
+          <td class="mono">{{ row.data_hex }}</td>
+          <td>{{ row.data_text }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

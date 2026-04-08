@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}U2T Web{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">U2T Web</div>
+      {% if current_user %}
+      <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/udp-server">UDP Server</a>
+        <a href="/tcp-server">TCP Server</a>
+        <a href="/client">Client</a>
+        <a href="/packets">Packets</a>
+        <a href="/logs">Logs</a>
+        {% if current_user.role == 'admin' %}
+        <a href="/users">Users</a>
+        {% endif %}
+      </nav>
+      <form method="post" action="/logout">
+        <button class="ghost" type="submit">退出登录</button>
+      </form>
+      {% endif %}
+    </aside>
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

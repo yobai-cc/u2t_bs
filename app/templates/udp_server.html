@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}UDP Server{% endblock %}
+{% block content %}
+<section class="page-header">
+  <h1>UDP Server</h1>
+  {% if message %}<div class="alert success">{{ message }}</div>{% endif %}
+</section>
+<section class="grid two">
+  <article class="card">
+    <h2>服务配置</h2>
+    <form method="post" action="/udp-server/config">
+      <label>绑定 IP<input name="bind_ip" value="{{ udp.bind_ip }}" required></label>
+      <label>绑定端口<input name="bind_port" type="number" value="{{ udp.bind_port }}" required></label>
+      <label>云端 IP<input name="cloud_ip" value="{{ udp.cloud_ip }}" required></label>
+      <label>云端端口<input name="cloud_port" type="number" value="{{ udp.cloud_port }}" required></label>
+      <label>自定义回发数据<textarea name="custom_reply_data">{{ udp.custom_reply_data }}</textarea></label>
+      <label class="checkbox"><input name="hex_mode" type="checkbox" {% if udp.hex_mode %}checked{% endif %}> Hex 模式</label>
+      <button type="submit">保存配置</button>
+    </form>
+  </article>
+  <article class="card">
+    <h2>运行状态</h2>
+    <p>运行中：{{ '是' if udp.running else '否' }}</p>
+    <p>最后客户端：{{ udp.last_client_addr or '无' }}</p>
+    <p>TX：{{ udp.tx_count }} bytes</p>
+    <p>RX：{{ udp.rx_count }} bytes</p>
+    <div class="button-row">
+      <form method="post" action="/udp-server/start"><button type="submit">启动</button></form>
+      <form method="post" action="/udp-server/stop"><button type="submit" class="danger">停止</button></form>
+    </div>
+  </article>
+</section>
+<section class="card">
+  <h2>手动发送</h2>
+  <form method="post" action="/udp-server/send">
+    <label>发送数据<textarea name="payload"></textarea></label>
+    <button type="submit">发送</button>
+  </form>
+</section>
+<section class="card">
+  <h2>实时日志</h2>
+  <pre id="runtime-stream" class="log-box">等待 WebSocket 数据...</pre>
+</section>
+{% endblock %}

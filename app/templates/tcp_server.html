@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}TCP Server{% endblock %}
+{% block content %}
+<section class="page-header">
+  <h1>TCP Server</h1>
+  {% if message %}<div class="alert success">{{ message }}</div>{% endif %}
+</section>
+<section class="grid two">
+  <article class="card">
+    <h2>监听配置</h2>
+    <form method="post" action="/tcp-server/config">
+      <label>绑定 IP<input name="bind_ip" value="{{ tcp.bind_ip }}" required></label>
+      <label>绑定端口<input name="bind_port" type="number" value="{{ tcp.bind_port }}" required></label>
+      <label class="checkbox"><input name="hex_mode" type="checkbox" {% if tcp.hex_mode %}checked{% endif %} {% if current_user.role == 'viewer' %}disabled{% endif %}> Hex 模式</label>
+      {% if current_user.role != 'viewer' %}<button type="submit">保存配置</button>{% endif %}
+    </form>
+  </article>
+  <article class="card">
+    <h2>运行状态</h2>
+    <p>运行中：{{ '是' if tcp.running else '否' }}</p>
+    <p>在线客户端：{{ tcp.client_count }}</p>
+    <p>TX：{{ tcp.tx_count }} bytes</p>
+    <p>RX：{{ tcp.rx_count }} bytes</p>
+    {% if current_user.role != 'viewer' %}
+    <div class="button-row">
+      <form method="post" action="/tcp-server/start"><button type="submit">启动</button></form>
+      <form method="post" action="/tcp-server/stop"><button type="submit" class="danger">停止</button></form>
+    </div>
+    {% endif %}
+  </article>
+</section>
+<section class="card">
+  <h2>客户端列表</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Client ID</th>
+        <th>连接时间</th>
+        <th>TX</th>
+        <th>RX</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for client in tcp.clients %}
+      <tr>
+        <td>{{ client.client_id }}</td>
+        <td>{{ client.connected_at }}</td>
+        <td>{{ client.tx_count }}</td>
+        <td>{{ client.rx_count }}</td>
+        <td>
+          {% if current_user.role != 'viewer' %}
+          <form method="post" action="/tcp-server/disconnect">
+            <input type="hidden" name="client_id" value="{{ client.client_id }}">
+            <button type="submit" class="danger">断开</button>
+          </form>
+          {% else %}
+          只读
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5">当前无连接客户端</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+<section class="card">
+  <h2>手动发送</h2>
+  {% if current_user.role != 'viewer' %}
+  <form method="post" action="/tcp-server/send">
+    <label>
+      目标客户端
+      <select name="client_id" required>
+        <option value="">请选择客户端</option>
+        {% for client in tcp.clients %}
+        <option value="{{ client.client_id }}">{{ client.client_id }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>发送数据<textarea name="payload"></textarea></label>
+    <button type="submit">发送</button>
+  </form>
+  {% else %}
+  <p>Viewer 角色仅可查看 TCP 运行状态。</p>
+  {% endif %}
+</section>
+<section class="card">
+  <h2>运行提示</h2>
+  <p>当前页面使用刷新查看最新客户端、流量和日志状态。</p>
+</section>
+{% endblock %}
