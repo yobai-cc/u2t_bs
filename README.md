@@ -23,10 +23,17 @@
   - 客户端断开
   - TCP TX/RX 计数
   - TCP packet/system log 落库
+- TCP/UDP Client MVP
+  - 单一客户端配置保存
+  - TCP/UDP 模式切换
+  - TCP connect/disconnect
+  - TCP/UDP 手动发送
+  - TCP 回包与 UDP 回复接收
+  - Client TX/RX 计数
+  - Client packet/system log 落库
 
 第二阶段待补：
 
-- TCP/UDP Client
 - 用户管理页面
 - 更完整的筛选与运行态审计
 
@@ -75,6 +82,16 @@ python -m venv .venv
 - `viewer` 仅可查看状态和客户端列表
 - TCP 流量会写入 `packet_logs`，可在 `/packets?protocol=TCP` 查看
 - TCP 运行事件会写入 `system_logs`，可在 `/logs` 查看
+
+## TCP/UDP Client MVP 说明
+
+- 页面入口：`/client`
+- 默认目标配置：`TCP 127.0.0.1:9001`
+- 支持保存 `protocol`、`target_ip`、`target_port`、`hex_mode`
+- `admin` 和 `operator` 可执行连接、断开、发送操作
+- `viewer` 仅可查看状态和计数
+- TCP/UDP Client 流量会写入 `packet_logs`，可在 `/packets?protocol=TCP` 或 `/packets?protocol=UDP` 查看
+- Client 运行事件会写入 `system_logs`，可在 `/logs` 查看
 
 ## Linux 部署
 

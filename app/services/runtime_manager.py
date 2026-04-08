@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.services.client_runtime import ClientRuntimeConfig, ClientRuntimeService
 from app.services.tcp_server import TCPServerConfig, TCPServerService
 from app.services.udp_server import UDPRelayConfig, UDPRelayService
 
@@ -10,6 +11,7 @@ class RuntimeManager:
     def __init__(self) -> None:
         self.udp_relay = UDPRelayService()
         self.tcp_server = TCPServerService()
+        self.client_runtime = ClientRuntimeService()
 
     def udp_snapshot(self) -> dict[str, object]:
         config = self.udp_relay.config
@@ -48,6 +50,19 @@ class RuntimeManager:
             hex_mode=bool(payload.get("hex_mode")),
         )
         self.tcp_server.update_config(config)
+        return config
+
+    def client_snapshot(self) -> dict[str, object]:
+        return self.client_runtime.snapshot()
+
+    def apply_client_config(self, payload: dict[str, object]) -> ClientRuntimeConfig:
+        config = ClientRuntimeConfig(
+            protocol=str(payload.get("protocol") or "TCP").upper(),
+            target_ip=str(payload.get("target_ip") or "127.0.0.1"),
+            target_port=int(payload.get("target_port") or 9001),
+            hex_mode=bool(payload.get("hex_mode")),
+        )
+        self.client_runtime.update_config(config)
         return config
 
 

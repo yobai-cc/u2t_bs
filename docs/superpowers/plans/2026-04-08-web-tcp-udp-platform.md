@@ -125,9 +125,15 @@ Completed after the initial stage plan:
 - TCP listener config persists into `service_configs` as `name="tcp_server"`
 - Manual TCP send, client disconnect, TX/RX counters, packet logs, and system logs are wired
 - Focused TCP tests added in `tests/test_tcp_server.py`
+- TCP/UDP Client MVP runtime added under `app/services/client_runtime.py`
+- `RuntimeManager` now also owns the single client runtime
+- `/client` now renders a real SSR page instead of the placeholder
+- Client config persists into `service_configs` as `name="client_runtime"`
+- TCP connect/disconnect and TCP/UDP manual send are wired through `/client`
+- Client packet logs and system logs are written for runtime traffic and actions
+- Focused Client tests added in `tests/test_client_runtime.py` and `tests/test_client_page.py`
 
 Still intentionally out of scope for the next phase:
 
-- TCP/UDP client mode
 - 用户管理页面
 - 更完整的筛选与运行态审计

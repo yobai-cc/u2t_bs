@@ -15,6 +15,9 @@ class Base(DeclarativeBase):
 
 settings = get_settings()
 
+if settings.database_url.startswith("sqlite:///"):
+    settings.data_dir.mkdir(parents=True, exist_ok=True)
+
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
@@ -47,3 +50,6 @@ def init_db() -> None:
     from app.models import packet_log, service_config, system_log, user  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+
+
+init_db()

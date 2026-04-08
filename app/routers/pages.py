@@ -65,6 +65,28 @@ def _save_tcp_config(db: Session, snapshot: dict[str, object]) -> None:
     db.commit()
 
 
+def _save_client_config(db: Session, snapshot: dict[str, object]) -> None:
+    row = db.query(ServiceConfig).filter(ServiceConfig.name == "client_runtime").first()
+    payload = {
+        "protocol": snapshot["protocol"],
+        "hex_mode": snapshot["hex_mode"],
+        "tx_count": snapshot["tx_count"],
+        "rx_count": snapshot["rx_count"],
+        "peer_label": snapshot["peer_label"],
+    }
+    if row is None:
+        row = ServiceConfig(name="client_runtime", service_type="client")
+        db.add(row)
+
+    row.bind_ip = "0.0.0.0"
+    row.bind_port = 0
+    row.target_ip = str(snapshot["target_ip"])
+    row.target_port = int(snapshot["target_port"])
+    row.enabled = bool(snapshot["connected"])
+    row.config_json = payload
+    db.commit()
+
+
 @router.get("/")
 def root() -> RedirectResponse:
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
@@ -293,8 +315,86 @@ async def disconnect_tcp_client(
 
 
 @router.get("/client", response_class=HTMLResponse)
-def client_placeholder(request: Request, user: User = Depends(get_current_user)):
-    return templates.TemplateResponse(request, "placeholder.html", {**_base_context(request, user), "title": "TCP/UDP Client", "message": "第二阶段实现"})
+def client_page(request: Request, user: User = Depends(get_current_user)):
+    context = _base_context(request, user)
+    context["client"] = runtime_manager.client_snapshot()
+    return templates.TemplateResponse(request, "client.html", context)
+
+
+@router.post("/client/config", response_class=HTMLResponse)
+def update_client_config(
+    request: Request,
+    protocol: str = Form(...),
+    target_ip: str = Form(...),
+    target_port: int = Form(...),
+    hex_mode: str | None = Form(default=None),
+    user: User = Depends(require_role("admin", "operator")),
+    db: Session = Depends(get_db),
+):
+    runtime_manager.apply_client_config(
+        {
+            "protocol": protocol,
+            "target_ip": target_ip,
+            "target_port": target_port,
+            "hex_mode": hex_mode == "on",
+        }
+    )
+    snapshot = runtime_manager.client_snapshot()
+    _save_client_config(db, snapshot)
+    system_log_service.log_to_db("info", "config", f"Client config updated by {user.username}", db=db)
+    context = _base_context(request, user)
+    context["client"] = snapshot
+    context["message"] = "Client 配置已更新"
+    return templates.TemplateResponse(request, "client.html", context)
+
+
+@router.post("/client/connect", response_class=HTMLResponse)
+async def connect_client(
+    request: Request,
+    user: User = Depends(require_role("admin", "operator")),
+    db: Session = Depends(get_db),
+):
+    await runtime_manager.client_runtime.connect()
+    snapshot = runtime_manager.client_snapshot()
+    _save_client_config(db, snapshot)
+    system_log_service.log_to_db("info", "service", f"Client connected by {user.username}", db=db)
+    context = _base_context(request, user)
+    context["client"] = snapshot
+    context["message"] = "Client 已连接"
+    return templates.TemplateResponse(request, "client.html", context)
+
+
+@router.post("/client/disconnect", response_class=HTMLResponse)
+async def disconnect_client(
+    request: Request,
+    user: User = Depends(require_role("admin", "operator")),
+    db: Session = Depends(get_db),
+):
+    await runtime_manager.client_runtime.disconnect()
+    snapshot = runtime_manager.client_snapshot()
+    _save_client_config(db, snapshot)
+    system_log_service.log_to_db("info", "service", f"Client disconnected by {user.username}", db=db)
+    context = _base_context(request, user)
+    context["client"] = snapshot
+    context["message"] = "Client 已断开"
+    return templates.TemplateResponse(request, "client.html", context)
+
+
+@router.post("/client/send", response_class=HTMLResponse)
+async def send_client_manual(
+    request: Request,
+    payload: str = Form(""),
+    user: User = Depends(require_role("admin", "operator")),
+    db: Session = Depends(get_db),
+):
+    await runtime_manager.client_runtime.send_manual(payload)
+    snapshot = runtime_manager.client_snapshot()
+    _save_client_config(db, snapshot)
+    system_log_service.log_to_db("info", "network", f"Manual client payload sent by {user.username}", db=db)
+    context = _base_context(request, user)
+    context["client"] = snapshot
+    context["message"] = "Client 手动发送已触发"
+    return templates.TemplateResponse(request, "client.html", context)
 
 
 @router.get("/users", response_class=HTMLResponse)
