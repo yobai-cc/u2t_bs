@@ -66,14 +66,14 @@ class UDPRelayService:
             local_addr=(self.config.bind_ip, self.config.bind_port),
         )
         self.running = True
-        self.emit_system_log("info", "service", f"UDP relay started on {self.config.bind_ip}:{self.config.bind_port}")
+        self.emit_system_log("info", "service", f"UDP server started on {self.config.bind_ip}:{self.config.bind_port}")
 
     async def stop(self) -> None:
         if self.transport:
             self.transport.close()
             self.transport = None
         self.running = False
-        self.emit_system_log("info", "service", "UDP relay stopped")
+        self.emit_system_log("info", "service", "UDP server stopped")
 
     async def send_manual(self, payload_text: str, target_addr: tuple[str, int] | None = None) -> None:
         payload = parse_payload(payload_text, self.config.hex_mode)
@@ -103,7 +103,7 @@ class UDPRelayService:
         source: tuple[str, int] | None = None,
     ) -> None:
         if not self.transport:
-            raise RuntimeError("UDP relay is not running")
+            raise RuntimeError("UDP server is not running")
 
         self.transport.sendto(payload, target)
         self.tx_count += len(payload)

@@ -170,7 +170,7 @@ async def start_udp_server(
     try:
         await runtime_manager.udp_relay.start()
     except Exception as exc:
-        system_log_service.log_to_db("error", "service", f"UDP relay start failed by {user.username}", str(exc), db=db)
+        system_log_service.log_to_db("error", "service", f"UDP server start failed by {user.username}", str(exc), db=db)
         return _runtime_error(
             request,
             user,
@@ -182,7 +182,7 @@ async def start_udp_server(
 
     snapshot = runtime_manager.udp_snapshot()
     _save_udp_config(db, snapshot)
-    system_log_service.log_to_db("info", "service", f"UDP relay started by {user.username}", db=db)
+    system_log_service.log_to_db("info", "service", f"UDP server started by {user.username}", db=db)
     context = _base_context(request, user)
     context["udp"] = snapshot
     context["message"] = "UDP 服务已启动"
@@ -198,7 +198,7 @@ async def stop_udp_server(
     try:
         await runtime_manager.udp_relay.stop()
     except Exception as exc:
-        system_log_service.log_to_db("error", "service", f"UDP relay stop failed by {user.username}", str(exc), db=db)
+        system_log_service.log_to_db("error", "service", f"UDP server stop failed by {user.username}", str(exc), db=db)
         return _runtime_error(
             request,
             user,
@@ -210,7 +210,7 @@ async def stop_udp_server(
 
     snapshot = runtime_manager.udp_snapshot()
     _save_udp_config(db, snapshot)
-    system_log_service.log_to_db("info", "service", f"UDP relay stopped by {user.username}", db=db)
+    system_log_service.log_to_db("info", "service", f"UDP server stopped by {user.username}", db=db)
     context = _base_context(request, user)
     context["udp"] = snapshot
     context["message"] = "UDP 服务已停止"

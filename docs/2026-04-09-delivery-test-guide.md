@@ -12,6 +12,13 @@
 - client / tcp-server / udp-server 运行态失败 inline error 提示
 - `/ws/runtime` 最小 smoke 覆盖
 
+## UDP Delivery Notes
+
+- 当前 `master` 的 UDP 服务只有固定自动回复单模式，不再包含 relay / cloud 双模式。
+- 终端设备向 `udp-server` 发包后，服务应立即回发 `custom_reply_data`。
+- 当 `custom_reply_data` 为空时，服务不回包，只在 `/logs` 中写入 warning。
+- `/packets` 的 UDP 方向应关注 `device -> server` 与 `server -> device`。
+
 ## Recommended Accounts
 
 - `admin`: full access
@@ -36,9 +43,9 @@
 4. Verify viewer cannot mutate `/client` and `/tcp-server`.
 5. Verify TCP server start, manual send, and disconnect.
 6. Verify client connect, manual send, and disconnect in TCP mode.
-7. Verify UDP server start, manual send, and stop.
+7. Verify UDP server start, automatic fixed reply behavior, optional manual send, and stop.
 8. Verify failed runtime actions show inline error and appear in `/logs`.
-9. Verify `/packets` and `/logs` filters return expected rows.
+9. Verify `/packets` and `/logs` filters return expected rows, and UDP filter options do not expose obsolete `cloud -> server` direction.
 
 ## Current Verification Baseline
 

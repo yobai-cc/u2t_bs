@@ -151,7 +151,7 @@ def test_packets_page_lists_udp_device_directions() -> None:
     body = response.body.decode("utf-8")
     assert "device -> server" in body
     assert "server -> device" in body
-    assert "cloud -> server" in body
+    assert "cloud -> server" not in body
 
 
 def test_logs_page_filters_by_level_and_category(tmp_path) -> None:
@@ -202,7 +202,7 @@ def test_logs_page_keyword_matches_message_and_detail(tmp_path) -> None:
         db.add_all(
             [
                 SystemLog(level="error", category="network", message="Connect failed", detail="target 10.0.0.8:9001 refused"),
-                SystemLog(level="info", category="service", message="UDP relay started", detail="bind 0.0.0.0:9000"),
+                SystemLog(level="info", category="service", message="UDP server started", detail="bind 0.0.0.0:9000"),
             ]
         )
         db.commit()
@@ -215,4 +215,4 @@ def test_logs_page_keyword_matches_message_and_detail(tmp_path) -> None:
 
     body = response.body.decode("utf-8")
     assert "Connect failed" in body
-    assert "UDP relay started" not in body
+    assert "UDP server started" not in body

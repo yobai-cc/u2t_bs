@@ -9,6 +9,7 @@
 <section class="grid two">
   <article class="card">
     <h2>服务配置</h2>
+    <p>收到设备 UDP 报文后，服务会立即回发下方配置的固定自定义数据。</p>
     <form method="post" action="/udp-server/config">
       <label>绑定 IP<input name="bind_ip" value="{{ udp.bind_ip }}" required></label>
       <label>绑定端口<input name="bind_port" type="number" value="{{ udp.bind_port }}" required></label>
@@ -20,6 +21,7 @@
   <article class="card">
     <h2>运行状态</h2>
     <p>运行中：{{ '是' if udp.running else '否' }}</p>
+    <p>回复模式：固定自动回复</p>
     <p>最后客户端：{{ udp.last_client_addr or '无' }}</p>
     <p>TX：{{ udp.tx_count }} bytes</p>
     <p>RX：{{ udp.rx_count }} bytes</p>
@@ -31,6 +33,7 @@
 </section>
 <section class="card">
   <h2>手动发送</h2>
+  <p>手动发送会发往最近一次发包的终端地址；如果当前没有设备地址，会提示失败。</p>
   <form method="post" action="/udp-server/send">
     <label>发送数据<textarea name="payload"></textarea></label>
     <button type="submit">发送</button>

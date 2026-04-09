@@ -34,7 +34,7 @@ async def test_udp_route_failures_render_error_and_write_system_log(tmp_path, mo
         raise RuntimeError("close failed")
 
     async def boom_send(payload: str) -> None:
-        raise RuntimeError("udp relay is not running")
+        raise RuntimeError("UDP server is not running")
 
     monkeypatch.setattr(runtime_manager.udp_relay, "start", boom_start)
     monkeypatch.setattr(runtime_manager.udp_relay, "stop", boom_stop)
@@ -56,19 +56,19 @@ async def test_udp_route_failures_render_error_and_write_system_log(tmp_path, mo
             assert "alert error" in start_body
             assert "UDP 服务启动失败：bind failed" in start_body
 
-        assert logs[-1] == ("error", "service", "UDP relay start failed by operator-user", "bind failed")
+        assert logs[-1] == ("error", "service", "UDP server start failed by operator-user", "bind failed")
 
         with testing_session_local() as db:
             send_response = await send_udp_manual(request, payload="ping", user=user, db=db)
             send_body = send_response.body.decode("utf-8")
             assert "alert error" in send_body
-            assert "UDP 手动发送失败：udp relay is not running" in send_body
+            assert "UDP 手动发送失败：UDP server is not running" in send_body
 
         assert logs[-1] == (
             "error",
             "network",
             "Manual UDP payload send failed by operator-user",
-            "udp relay is not running",
+            "UDP server is not running",
         )
 
         with testing_session_local() as db:
@@ -77,7 +77,7 @@ async def test_udp_route_failures_render_error_and_write_system_log(tmp_path, mo
             assert "alert error" in stop_body
             assert "UDP 服务停止失败：close failed" in stop_body
 
-        assert logs[-1] == ("error", "service", "UDP relay stop failed by operator-user", "close failed")
+        assert logs[-1] == ("error", "service", "UDP server stop failed by operator-user", "close failed")
     finally:
         runtime_manager.udp_relay.running = False
         runtime_manager.udp_relay.transport = None

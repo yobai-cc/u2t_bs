@@ -1,6 +1,6 @@
 # U2T Web Platform
 
-轻量级 Web 版 TCP/UDP 调试与转发平台，使用 FastAPI + Jinja2 + HTMX + SQLite 构建。
+轻量级 Web 版 TCP/UDP 调试平台，使用 FastAPI + Jinja2 + HTMX + SQLite 构建。
 
 ## 当前阶段
 
@@ -84,8 +84,10 @@ python -m venv .venv
 - 页面入口：`/udp-server`
 - 默认监听配置：`0.0.0.0:9000`
 - 支持保存 `bind_ip`、`bind_port`、`custom_reply_data`、`hex_mode`
+- 当前 `master` 的 UDP 服务为单一固定自动回复模式，不再包含 relay / cloud 双模式语义
 - 终端设备发包到服务后，服务立即回发固定自定义数据
 - `custom_reply_data` 为空时，服务不回包并写入 warning 日志
+- 手动发送会发往最近一次发包的终端地址；如果尚未记录设备地址则会失败提示
 - `admin` 和 `operator` 可执行启动、停止、手动发送操作
 - `viewer` 仅可查看状态和计数
 - UDP 流量会写入 `packet_logs`，可在 `/packets?protocol=UDP` 查看
