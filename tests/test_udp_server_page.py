@@ -4,9 +4,10 @@ from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
 
 from app.db import Base
+from app.models.service_config import ServiceConfig
 from app.models.user import User
 from app.services.runtime_manager import runtime_manager
-from app.services.udp_server import UDPRelayConfig
+from app.services.udp_server import UDPServerConfig
 
 
 @pytest.mark.anyio
@@ -36,13 +37,13 @@ async def test_udp_route_failures_render_error_and_write_system_log(tmp_path, mo
     async def boom_send(payload: str) -> None:
         raise RuntimeError("UDP server is not running")
 
-    monkeypatch.setattr(runtime_manager.udp_relay, "start", boom_start)
-    monkeypatch.setattr(runtime_manager.udp_relay, "stop", boom_stop)
-    monkeypatch.setattr(runtime_manager.udp_relay, "send_manual", boom_send)
+    monkeypatch.setattr(runtime_manager.udp_server, "start", boom_start)
+    monkeypatch.setattr(runtime_manager.udp_server, "stop", boom_stop)
+    monkeypatch.setattr(runtime_manager.udp_server, "send_manual", boom_send)
 
     try:
-        runtime_manager.udp_relay.update_config(
-            UDPRelayConfig(
+        runtime_manager.udp_server.update_config(
+            UDPServerConfig(
                 bind_ip="127.0.0.1",
                 bind_port=9000,
                 custom_reply_data="",
@@ -79,11 +80,11 @@ async def test_udp_route_failures_render_error_and_write_system_log(tmp_path, mo
 
         assert logs[-1] == ("error", "service", "UDP server stop failed by operator-user", "close failed")
     finally:
-        runtime_manager.udp_relay.running = False
-        runtime_manager.udp_relay.transport = None
-        runtime_manager.udp_relay.protocol = None
-        runtime_manager.udp_relay.last_client_addr = None
-        runtime_manager.udp_relay.update_config(UDPRelayConfig())
+        runtime_manager.udp_server.running = False
+        runtime_manager.udp_server.transport = None
+        runtime_manager.udp_server.protocol = None
+        runtime_manager.udp_server.last_client_addr = None
+        runtime_manager.udp_server.update_config(UDPServerConfig())
 
 
 def test_update_udp_config_accepts_bind_and_reply_fields_only(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -107,7 +108,7 @@ def test_update_udp_config_accepts_bind_and_reply_fields_only(monkeypatch: pytes
     ]
     logs: list[tuple[str, str, str, str]] = []
 
-    monkeypatch.setattr(runtime_manager, "apply_udp_config", lambda payload: captured_payload.append(payload) or UDPRelayConfig(**payload))
+    monkeypatch.setattr(runtime_manager, "apply_udp_config", lambda payload: captured_payload.append(payload) or UDPServerConfig(**payload))
     monkeypatch.setattr(runtime_manager, "udp_snapshot", lambda: snapshots[-1])
     monkeypatch.setattr("app.routers.pages._save_udp_config", lambda db, snapshot: None)
     monkeypatch.setattr(
@@ -138,3 +139,30 @@ def test_update_udp_config_accepts_bind_and_reply_fields_only(monkeypatch: pytes
     assert "云端 IP" not in body
     assert "UDP 配置已更新" in body
     assert logs[-1] == ("info", "config", "UDP config updated by operator-user", "")
+
+
+def test_save_udp_config_uses_udp_server_service_name(tmp_path) -> None:
+    from app.routers.pages import _save_udp_config
+
+    db_path = tmp_path / "udp-config-name.db"
+    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+    testing_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    Base.metadata.create_all(bind=engine)
+
+    snapshot = {
+        "running": False,
+        "bind_ip": "127.0.0.1",
+        "bind_port": 9000,
+        "custom_reply_data": "reply",
+        "hex_mode": False,
+        "tx_count": 1,
+        "rx_count": 2,
+        "last_client_addr": ("10.0.0.8", 4567),
+    }
+
+    with testing_session_local() as db:
+        _save_udp_config(db, snapshot)
+        row = db.query(ServiceConfig).one()
+
+    assert row.name == "udp_server"
+    assert row.service_type == "udp_server"

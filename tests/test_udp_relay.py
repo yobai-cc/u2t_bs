@@ -4,12 +4,12 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db import Base
 from app.models.packet_log import PacketLog
-from app.services.udp_server import UDPRelayConfig, UDPRelayService
+from app.services.udp_server import UDPServerConfig, UDPServerService
 
 
 def test_update_config_changes_runtime_state() -> None:
-    service = UDPRelayService()
-    config = UDPRelayConfig(
+    service = UDPServerService()
+    config = UDPServerConfig(
         bind_ip="0.0.0.0",
         bind_port=9000,
         custom_reply_data="aa55",
@@ -25,9 +25,9 @@ def test_update_config_changes_runtime_state() -> None:
 
 
 def test_track_client_addr_stores_latest_peer() -> None:
-    service = UDPRelayService()
+    service = UDPServerService()
     service.update_config(
-        UDPRelayConfig(
+        UDPServerConfig(
             bind_ip="0.0.0.0",
             bind_port=9000,
             custom_reply_data="reply",
@@ -42,9 +42,9 @@ def test_track_client_addr_stores_latest_peer() -> None:
 
 @pytest.mark.anyio
 async def test_handle_datagram_replies_immediately_to_device(monkeypatch: pytest.MonkeyPatch) -> None:
-    service = UDPRelayService()
+    service = UDPServerService()
     service.update_config(
-        UDPRelayConfig(
+        UDPServerConfig(
             bind_ip="0.0.0.0",
             bind_port=9000,
             custom_reply_data="reply",
@@ -83,9 +83,9 @@ async def test_handle_datagram_replies_immediately_to_device(monkeypatch: pytest
 
 @pytest.mark.anyio
 async def test_handle_datagram_warns_when_reply_payload_empty(monkeypatch: pytest.MonkeyPatch) -> None:
-    service = UDPRelayService()
+    service = UDPServerService()
     service.update_config(
-        UDPRelayConfig(
+        UDPServerConfig(
             bind_ip="0.0.0.0",
             bind_port=9000,
             custom_reply_data="",
@@ -121,9 +121,9 @@ async def test_udp_service_replies_over_real_socket(tmp_path) -> None:
     testing_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     Base.metadata.create_all(bind=engine)
 
-    service = UDPRelayService(db_factory=testing_session_local)
+    service = UDPServerService(db_factory=testing_session_local)
     service.update_config(
-        UDPRelayConfig(
+        UDPServerConfig(
             bind_ip="127.0.0.1",
             bind_port=0,
             custom_reply_data="pong",

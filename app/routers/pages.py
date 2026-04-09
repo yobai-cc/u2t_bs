@@ -46,7 +46,7 @@ def _runtime_error(
 
 
 def _save_udp_config(db: Session, snapshot: dict[str, object]) -> None:
-    row = db.query(ServiceConfig).filter(ServiceConfig.name == "udp_relay").first()
+    row = db.query(ServiceConfig).filter(ServiceConfig.name == "udp_server").first()
     payload = {
         "custom_reply_data": snapshot["custom_reply_data"],
         "hex_mode": snapshot["hex_mode"],
@@ -55,7 +55,7 @@ def _save_udp_config(db: Session, snapshot: dict[str, object]) -> None:
         "rx_count": snapshot["rx_count"],
     }
     if row is None:
-        row = ServiceConfig(name="udp_relay", service_type="udp_server")
+        row = ServiceConfig(name="udp_server", service_type="udp_server")
         db.add(row)
 
     row.bind_ip = str(snapshot["bind_ip"])
@@ -168,7 +168,7 @@ async def start_udp_server(
     db: Session = Depends(get_db),
 ):
     try:
-        await runtime_manager.udp_relay.start()
+        await runtime_manager.udp_server.start()
     except Exception as exc:
         system_log_service.log_to_db("error", "service", f"UDP server start failed by {user.username}", str(exc), db=db)
         return _runtime_error(
@@ -196,7 +196,7 @@ async def stop_udp_server(
     db: Session = Depends(get_db),
 ):
     try:
-        await runtime_manager.udp_relay.stop()
+        await runtime_manager.udp_server.stop()
     except Exception as exc:
         system_log_service.log_to_db("error", "service", f"UDP server stop failed by {user.username}", str(exc), db=db)
         return _runtime_error(
@@ -225,7 +225,7 @@ async def send_udp_manual(
     db: Session = Depends(get_db),
 ):
     try:
-        await runtime_manager.udp_relay.send_manual(payload)
+        await runtime_manager.udp_server.send_manual(payload)
     except Exception as exc:
         system_log_service.log_to_db(
             "error", "network", f"Manual UDP payload send failed by {user.username}", str(exc), db=db

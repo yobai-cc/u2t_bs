@@ -13,15 +13,15 @@ from app.utils.codec import parse_payload
 
 
 @dataclass(slots=True)
-class UDPRelayConfig:
+class UDPServerConfig:
     bind_ip: str = "0.0.0.0"
     bind_port: int = 9000
     custom_reply_data: str = ""
     hex_mode: bool = False
 
 
-class UDPRelayProtocol(asyncio.DatagramProtocol):
-    def __init__(self, service: "UDPRelayService") -> None:
+class UDPServerProtocol(asyncio.DatagramProtocol):
+    def __init__(self, service: "UDPServerService") -> None:
         self.service = service
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
@@ -38,20 +38,20 @@ class UDPRelayProtocol(asyncio.DatagramProtocol):
             self.service.emit_system_log("error", "network", "UDP transport closed unexpectedly", str(exc))
 
 
-class UDPRelayService:
+class UDPServerService:
     """Async UDP service that replies fixed configured payloads to devices."""
 
     def __init__(self, db_factory: Callable[[], Session] = SessionLocal) -> None:
         self.db_factory = db_factory
-        self.config = UDPRelayConfig()
+        self.config = UDPServerConfig()
         self.transport: asyncio.DatagramTransport | None = None
-        self.protocol: UDPRelayProtocol | None = None
+        self.protocol: UDPServerProtocol | None = None
         self.running = False
         self.tx_count = 0
         self.rx_count = 0
         self.last_client_addr: tuple[str, int] | None = None
 
-    def update_config(self, config: UDPRelayConfig) -> None:
+    def update_config(self, config: UDPServerConfig) -> None:
         self.config = config
 
     def record_client_addr(self, addr: tuple[str, int]) -> None:
@@ -62,7 +62,7 @@ class UDPRelayService:
             return
         loop = asyncio.get_running_loop()
         self.transport, self.protocol = await loop.create_datagram_endpoint(
-            lambda: UDPRelayProtocol(self),
+            lambda: UDPServerProtocol(self),
             local_addr=(self.config.bind_ip, self.config.bind_port),
         )
         self.running = True
